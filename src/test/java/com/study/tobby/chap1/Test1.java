@@ -5,6 +5,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("deprecation")
@@ -50,7 +51,7 @@ public class Test1 {
     }
 
     @Test
-    void test2() {
+    void test2() throws InterruptedException {
         Observer observer = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
@@ -66,6 +67,8 @@ public class Test1 {
 //        io.run();
 
         System.out.println(Thread.currentThread().getName() + "   EXIT ");
+
+        es.awaitTermination(2, TimeUnit.SECONDS);
         es.shutdown();
     }
 }
