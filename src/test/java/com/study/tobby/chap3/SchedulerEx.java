@@ -17,7 +17,6 @@ public class SchedulerEx {
     @Test
     @DisplayName("publisher 사이에 chaining 관련된 예시")
     void test() {
-
         Publisher<Integer> pub = sub -> {
             sub.onSubscribe(new Subscription() {
                 @Override
@@ -33,7 +32,6 @@ public class SchedulerEx {
 
                 @Override
                 public void cancel() {
-
                 }
             });
         };
@@ -49,7 +47,6 @@ public class SchedulerEx {
         };
 
         Publisher<Integer> pubOnPub = sub -> subOnPub.subscribe(new Subscriber<Integer>() {
-
             ExecutorService es = Executors.newSingleThreadExecutor(new CustomizableThreadFactory() {
                 @Override
                 public String getThreadNamePrefix() {
@@ -65,7 +62,6 @@ public class SchedulerEx {
             @Override
             public void onNext(Integer integer) {
                 es.execute(() -> sub.onNext(integer));
-
             }
 
             @Override
@@ -91,22 +87,18 @@ public class SchedulerEx {
             @Override
             public void onNext(Integer i) {
                 log.info("sub onNext :{}", i);
-
             }
 
             @Override
             public void onError(Throwable t) {
                 log.info("sub onError : {}", t);
-
             }
 
             @Override
             public void onComplete() {
                 log.info("sub onComplete ");
-
             }
         };
-
 //        subOnPub.subscribe(sub);
         pubOnPub.subscribe(sub);
         log.info("exit");

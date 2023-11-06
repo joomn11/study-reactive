@@ -60,7 +60,6 @@ public class StudyReactiveApplication {
     @Component
     public static class MyService {
 
-
         public String hello() throws InterruptedException {
             log.info("hello()");
             Thread.sleep(2000);
@@ -81,5 +80,4 @@ public class StudyReactiveApplication {
             return new AsyncResult<>("hello");
         }
     }
-
 }
