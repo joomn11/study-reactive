@@ -92,9 +92,9 @@ public class My3Controller {
         String url22 = "http://localhost:8081/service2?req={req}";
         Completion.from(asyncRt.getForEntity(SERVICE_URL, String.class, "hello " + idx))
                   .andApply(s -> asyncRt.getForEntity(url22, String.class, s.getBody()))
-//                  .andApply(s -> myService.work(s.getBody()))
+                  .andApply(s -> myService.work(s.getBody()))
                   .andError(e -> dr.setErrorResult(e.toString()))
-                  .andAccept(s -> dr.setResult(s.getBody()));
+                  .andAccept(s -> dr.setResult(s));
         return dr;
     }
 }

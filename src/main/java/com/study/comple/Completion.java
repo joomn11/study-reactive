@@ -4,18 +4,17 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.concurrent.ListenableFuture;
 
 @NoArgsConstructor
 @Slf4j
-public class Completion {
+public class Completion<S, T> {
 
 
     public Completion next;
 
-    public static Completion from(ListenableFuture<ResponseEntity<String>> lf) {
-        Completion c = new Completion();
+    public static <S, T> Completion<S, T> from(ListenableFuture<T> lf) {
+        Completion<S, T> c = new Completion<>();
         lf.addCallback(s -> {
             c.complete(s);
         }, e -> {
@@ -30,28 +29,28 @@ public class Completion {
         }
     }
 
-    public void complete(ResponseEntity<String> s) {
+    public void complete(T s) {
         if (next != null) {
             next.run(s);
         }
     }
 
-    public void run(ResponseEntity<String> value) {
+    public void run(S value) {
     }
 
-    public void andAccept(Consumer<ResponseEntity<String>> con) {
-        Completion c = new AcceptCompletion(con);
+    public void andAccept(Consumer<T> con) {
+        Completion<T, Void> c = new AcceptCompletion<>(con);
         this.next = c;
     }
 
-    public Completion andError(Consumer<Throwable> econ) {
-        Completion c = new ErrorCompletion(econ);
+    public Completion<T, T> andError(Consumer<Throwable> econ) {
+        Completion<T, T> c = new ErrorCompletion<>(econ);
         this.next = c;
         return c;
     }
 
-    public Completion andApply(Function<ResponseEntity<String>, ListenableFuture<ResponseEntity<String>>> fn) {
-        Completion c = new ApplyCompletion(fn);
+    public <V> Completion<T, V> andApply(Function<T, ListenableFuture<V>> fn) {
+        Completion<T, V> c = new ApplyCompletion<>(fn);
         this.next = c;
         return c;
     }

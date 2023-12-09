@@ -1,18 +1,17 @@
 package com.study.comple;
 
 import java.util.function.Consumer;
-import org.springframework.http.ResponseEntity;
 
-public class AcceptCompletion extends Completion {
+public class AcceptCompletion<S> extends Completion<S, Void> {
 
-    public Consumer<ResponseEntity<String>> con;
+    public Consumer<S> con;
 
-    public AcceptCompletion(Consumer<ResponseEntity<String>> con) {
+    public AcceptCompletion(Consumer<S> con) {
         this.con = con;
     }
 
     @Override
-    public void run(ResponseEntity<String> value) {
+    public void run(S value) {
         con.accept(value);
     }
 }

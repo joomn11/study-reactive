@@ -2,10 +2,9 @@ package com.study.comple;
 
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 
 @Slf4j
-public class ErrorCompletion extends Completion {
+public class ErrorCompletion<T> extends Completion<T, T> {
 
     public Consumer<Throwable> econ;
 
@@ -14,7 +13,7 @@ public class ErrorCompletion extends Completion {
     }
 
     @Override
-    public void run(ResponseEntity<String> value) {
+    public void run(T value) {
         if (next != null) {
             next.run(value);
         }
