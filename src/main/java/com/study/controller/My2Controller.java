@@ -2,6 +2,9 @@ package com.study.controller;
 
 import com.study.service.MyService;
 import io.netty.channel.nio.NioEventLoopGroup;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
@@ -152,6 +155,40 @@ public class My2Controller {
         return dr;
     }
 
+    /**
+     * 외부 api 호출 - async * 2 + 내부 async service + deferredResult
+     * TODO : chapter 6 따라 쳐보기 !!
+     */
+    @GetMapping("/rest8")
+    public DeferredResult<String> rest8(int idx) {
+        DeferredResult<String> dr = new DeferredResult<>();
+        String url22 = "http://localhost:8081/service2?req={req}";
+        Completion.from(asyncRt.getForEntity(SERVICE_URL, String.class, "hello " + idx))
+                  .andApply(s -> asyncRt.getForEntity(url22, String.class, s.getBody()))
+                  .andAccept(s -> dr.setResult(s.getBody()));
+
+        ListenableFuture<ResponseEntity<String>> future = asyncRt.getForEntity(SERVICE_URL, String.class, "hello " + idx);
+
+        future.addCallback(s -> {
+            String url2 = "http://localhost:8081/service2?req={req}";
+            ListenableFuture<ResponseEntity<String>> future2 = asyncRt.getForEntity(url2, String.class, s.getBody());
+            future2.addCallback(s2 -> {
+                ListenableFuture<String> future3 = myService.work(s2.getBody());
+                future3.addCallback(s3 -> {
+                    dr.setResult(s3);
+                }, e -> {
+                    dr.setErrorResult(e.getMessage());
+                });
+            }, e -> {
+                dr.setErrorResult(e.getMessage());
+            });
+        }, e -> {
+            dr.setErrorResult(e.getMessage());
+        });
+
+        return dr;
+    }
+
     @Bean
     public ThreadPoolTaskExecutor myThreadPool() {
         ThreadPoolTaskExecutor te = new ThreadPoolTaskExecutor();
@@ -159,5 +196,62 @@ public class My2Controller {
         te.setMaxPoolSize(1);
         te.initialize();
         return te;
+    }
+
+    @NoArgsConstructor
+    public static class Completion {
+
+        Completion next;
+
+        Consumer<ResponseEntity<String>> con;
+        Function<ResponseEntity<String>, ListenableFuture<ResponseEntity<String>>> fcon;
+
+        public Completion(Consumer<ResponseEntity<String>> con) {
+            this.con = con;
+        }
+
+        public Completion(Function<ResponseEntity<String>, ListenableFuture<ResponseEntity<String>>> con) {
+            this.fcon = con;
+        }
+
+        public static Completion from(ListenableFuture<ResponseEntity<String>> lf) {
+            Completion c = new Completion();
+            lf.addCallback(s -> {
+                c.complete(s);
+            }, e -> {
+                c.error(e);
+            });
+            return c;
+        }
+
+        void error(Throwable e) {
+        }
+
+        void complete(ResponseEntity<String> s) {
+            if (next != null) {
+                next.run(s);
+            }
+        }
+
+        void run(ResponseEntity<String> value) {
+            if (con != null) {
+                con.accept(value);
+            } else if (fcon != null) {
+                ListenableFuture<ResponseEntity<String>> lf = fcon.apply(value);
+                lf.addCallback(s -> complete(s), e -> error(e));
+            }
+        }
+
+        void andAccept(Consumer<ResponseEntity<String>> con) {
+            Completion c = new Completion(con);
+            this.next = c;
+        }
+
+        public Completion andApply(Function<ResponseEntity<String>, ListenableFuture<ResponseEntity<String>>> con) {
+            Completion c = new Completion(con);
+            this.next = c;
+
+            return c;
+        }
     }
 }
