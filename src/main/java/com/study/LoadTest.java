@@ -23,7 +23,7 @@ public class LoadTest {
 //        String url = "http://localhost:8080/dr";
 //        String url = "http://localhost:8080/rest2?idx={idx}";
 //        String url = "http://localhost:8080/rest7?idx={idx}";
-        String url = "http://localhost:8080/my3/rest4?idx={idx}";
+        String url = "http://localhost:8080/webflux/rest?idx={idx}";
 
         CyclicBarrier barrier = new CyclicBarrier(101);
 

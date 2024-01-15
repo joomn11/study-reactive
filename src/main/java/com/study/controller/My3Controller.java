@@ -3,6 +3,7 @@ package com.study.controller;
 import com.study.comple.Completion;
 import com.study.service.MyService;
 import io.netty.channel.nio.NioEventLoopGroup;
+import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -96,5 +97,26 @@ public class My3Controller {
                   .andError(e -> dr.setErrorResult(e.toString()))
                   .andAccept(s -> dr.setResult(s));
         return dr;
+    }
+
+    @GetMapping("/rest6")
+    public DeferredResult<String> rest6(int idx) {
+        DeferredResult<String> dr = new DeferredResult<>();
+        String url22 = "http://localhost:8081/service2?req={req}";
+        toCF(asyncRt.getForEntity(SERVICE_URL, String.class, "hello " + idx))
+            .thenCompose(s -> toCF(asyncRt.getForEntity(url22, String.class, s.getBody())))
+            .thenApplyAsync(s -> myService.work2(s.getBody()))
+            .thenAccept(s -> dr.setResult(s))
+            .exceptionally(e -> {
+                dr.setErrorResult(e.getMessage());
+                return (Void) null;
+            });
+        return dr;
+    }
+
+    <T> CompletableFuture<T> toCF(ListenableFuture<T> lf) {
+        CompletableFuture<T> cf = new CompletableFuture<>();
+        lf.addCallback(s -> cf.complete(s), e -> cf.completeExceptionally(e));
+        return cf;
     }
 }
